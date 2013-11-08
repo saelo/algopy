@@ -123,6 +123,34 @@ class Graph:
         """
         return self.get_edge(n1, n2) is not None
 
+    def get_reverse_edge(self, edge):
+        """
+        Returns the inverse edge to the given edge or None if there is no such edge.
+        """
+        return edge.destination().edge_to(edge.source())
+
+    def has_reverse_edge(self, edge):
+        """
+        Returns true if an inverse edge to the given edge exists in this graph.
+        """
+        return self.get_reverse_edge(edge) is not None
+
+    def clear(self):
+        """
+        Removes all nodes and edges from this graph.
+        """
+        self._nodes = {}
+        self._edges = []
+
+    def reset(self):
+        """
+        Removes all custom attributes from the graphs nodes and edges.
+        """
+        for edge in self.edges():
+            edge.clear()
+        for node in self.nodes():
+            node.clear()
+
     def _node_lookup(self, l):
         """
         Returns the node objects represented by the elements of the given list.
@@ -222,6 +250,14 @@ class Node:
         """
         return self.edge_from(node) is not None
 
+    def clear(self):
+        """
+        Removes all custom attributes from this node.
+        """
+        for key, value in vars(self).items():
+            if not key.startswith("_"):
+                delattr(self, key)
+
     def __str__(self):
         res = self._name + "\n"
         for key, value in vars(self).items():
@@ -262,6 +298,13 @@ class Edge:
         """
         return self._is_directed
 
+    def clear(self):
+        """
+        Removes all custom attributes from this edge.
+        """
+        for key, value in vars(self).items():
+            if not key.startswith("_"):
+                delattr(self, key)
 
     def __str__(self):
         res = self._node1.name() + " --> " + self._node2.name() + "\n"
