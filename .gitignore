@@ -1,2 +1,5 @@
 # ignore precompiled python code
 *.pyc
+
+# ignore tests for now
+tests.py
