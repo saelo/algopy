@@ -6,6 +6,7 @@
 # Copyright (c) 2013 Samuel Groß
 #
 
+import copy
 
 class Graph:
     """
@@ -28,6 +29,12 @@ class Graph:
         Returns all edges in this graph.
         """
         return list(self._edges)
+
+    def empty(self):
+        """
+        Returns true if this graph is empty - does not contain any nodes.
+        """
+        return False if self._nodes else True
 
     def add_node(self, name, data = None):
         """
@@ -100,7 +107,7 @@ class Graph:
         """
         Returns the node object with the given name or None if there is no such node.
         """
-        return self._nodes.get(name, None)
+        return self._nodes.get(name)
 
     def has_node(self, name):
         """
@@ -163,7 +170,7 @@ class Graph:
             if obj in self.nodes():
                 res.append(obj)
             else:
-                res.append(self._nodes.get(obj, None))
+                res.append(self._nodes.get(obj))
 
         return res
 
@@ -227,14 +234,14 @@ class Node:
         If available returns an edge from this node
         to the given node else None.
         """
-        return self._outgoing_edges.get(node, None)
+        return self._outgoing_edges.get(node)
 
     def edge_from(self, node):
         """
         If available returns an edge from the given
         node to this node else None.
         """
-        return self._incoming_edges.get(node, None)
+        return self._incoming_edges.get(node)
 
     def has_edge_to(self, node):
         """
@@ -352,6 +359,35 @@ class Path:
         """
         return self._nodes[-1]
 
+    def items(self):
+        """
+        Returns a generator of all (edge, node) pairs in this path.
+        Note: The start node is not contained in the result.
+        """
+        pos = 0
+        for edge in self.edges():
+            pos += 1
+            yield (edge, self._nodes[pos])
+
+    def subpath_from(self, src):
+        """
+        Returns a new path starting at the given node or None if
+        the given node is not part of this path.
+        """
+        path = Path(src)
+        found = False
+
+        if src == self.start():
+            found = True
+
+        for edge, node in self.items():
+            if found:
+                path.append(edge, node)
+            if node == src:
+                found = True
+
+        return path if found else None
+
     def append(self, edge, node):
         """
         Adds a new node and the corresponding edge to this path.
@@ -361,9 +397,21 @@ class Path:
         self._nodes.append(node)
         self._edges.append(edge)
 
+        return self     # allows function chaining
+
     def pop(self):
         """
         Removes the last (edge, node) pair added to this path.
         """
         self._nodes.pop()
         self._edges.pop()
+
+        return self
+
+    def __str__(self):
+        res = ""
+
+        for edge in self.edges():
+            res += edge.source().name() + " --> " + edge.destination().name() + "\n"
+
+        return res
