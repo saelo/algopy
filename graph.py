@@ -6,7 +6,7 @@
 # Copyright (c) 2013 Samuel Groß
 #
 
-import copy
+from collections import OrderedDict          # use ordered dicts to preserve element ordering     
 
 class Graph:
     """
@@ -14,7 +14,7 @@ class Graph:
     """
 
     def __init__(self):
-        self._nodes = {}
+        self._nodes = OrderedDict()
         self._edges = []
 
 
@@ -62,6 +62,10 @@ class Graph:
         Remove the given node from this graph
         """
         node = self._node_lookup([n])
+        # remove all edges to/from the node first
+        for edge in self.edges():
+            if edge.source() == node or edge.destination() == node:
+                self.remove_edge(edge)
         del self._nodes[node.name()]
 
     def remove_nodes(self, l):
@@ -80,10 +84,25 @@ class Graph:
         srcnode, dstnode = self._node_lookup([src, dst])
         if srcnode is None or dstnode is None:
             raise ValueError("No such node in this graph")
-        edge = Edge(srcnode, dstnode, data if data is not None else {})
+        edge = Edge(srcnode, dstnode, data)
         self._edges.append(edge)
         srcnode._add_outgoing_edge(edge)
         dstnode._add_incoming_edge(edge)
+        return edge
+
+    def add_undirected_edge(self, n1, n2, data = None):
+        """
+        Add an undirected edge between the two given nodes.
+
+        Returns the edge object on success.
+        """
+        first, second = self._node_lookup([n1, n2])
+        if first is None or second is None:
+            raise ValueError("No such node in this graph")
+        edge = UndirectedEdge(first, second, data)
+        self._edges.append(edge)
+        first._add_undirected_edge(edge)
+        second._add_undirected_edge(edge)
         return edge
 
     def remove_edge(self, edge):
@@ -142,11 +161,23 @@ class Graph:
         """
         return self.get_reverse_edge(edge) is not None
 
+    def is_directed(self):
+        """
+        A graph is considered directed if all of its edges are directed.
+        """
+        return all( edge.is_directed() for edge in self._edges )
+
+    def is_undirected(self):
+        """
+        A graph is considered undirected if all of its edges are undirected.
+        """
+        return all( edge.is_undirected() for edge in self._edges )
+
     def clear(self):
         """
         Removes all nodes and edges from this graph.
         """
-        self._nodes = {}
+        self._nodes = OrderedDict()
         self._edges = []
 
     def reset(self):
@@ -160,7 +191,8 @@ class Graph:
 
     def _node_lookup(self, l):
         """
-        Returns the node objects represented by the elements of the given list.
+        Returns the graphs node object or None for the given node/node name or every
+        element in the given list of nodes/node names.
 
         The list can contain node IDs or node objects directly, the resulting list will
         only contain valid node objects or None if there was no valid node object.
@@ -172,7 +204,7 @@ class Graph:
             else:
                 res.append(self._nodes.get(obj))
 
-        return res
+        return res if not len(res) == 1 else res[0]
 
     def __str__(self):
         res = "Nodes:\n"
@@ -193,8 +225,8 @@ class Node:
 
     def __init__(self, name, data = None):
         self._name = name
-        self._outgoing_edges = {}
-        self._incoming_edges = {}
+        self._outgoing_edges = OrderedDict()
+        self._incoming_edges = OrderedDict()
         if data is not None:
             for key, value in data.items():
                 setattr(self, key, value)
@@ -204,6 +236,11 @@ class Node:
 
     def _add_incoming_edge(self, edge):
         self._incoming_edges[edge.source()] = edge
+
+    def _add_undirected_edge(self, edge):
+        other = edge.node1() if not self is edge.node1() else edge.node2()
+        self._outgoing_edges[other] = edge
+        self._incoming_edges[other] = edge
 
     def _remove_outgoing_edge(self, edge):
         del self._outgoing_edges[edge.destination()]
@@ -280,12 +317,17 @@ class Edge:
     """
 
     def __init__(self, node1, node2, data = None):
-        self._is_directed = True
-        self._node1  = node1
-        self._node2  = node2
+        self._node1 = node1
+        self._node2 = node2
         if data is not None:
             for key, value in data.items():
                 setattr(self, key, value)
+
+    def nodes(self):
+        """
+        Returns the two nodes connected by this edge.
+        """
+        return [self._node1, self._node2]
 
     def source(self):
         """
@@ -303,7 +345,13 @@ class Edge:
         """
         Returns true if this is a directed edge.
         """
-        return self._is_directed
+        return True;
+
+    def is_undirected(self):
+        """
+        Returns true if this is a undirected edge.
+        """
+        return not self.is_directed()
 
     def clear(self):
         """
@@ -320,6 +368,42 @@ class Edge:
                 res += "    " + str(key) + " : " + str(value) + "\n"
 
         return res
+
+
+class UndirectedEdge(Edge):
+    """
+    Represents an undirected edge between two nodes.
+    """
+
+    def source(self):
+        return None     # no source or destination defined for undirected edges
+
+    def destination(self):
+        return None     # use node1()/node2() and/or nodes() instead
+ 
+    def node1(self):
+        """
+        Returns one of the two nodes connected by this edge.
+        """
+        return self._node1
+
+    def node2(self):
+        """
+        Returns the other node of the two nodes connected by this edge.
+        """
+        return self._node2
+
+    def is_directed(self):
+        return False;
+
+    def __str__(self):
+        res = self._node1.name() + " <--> " + self._node2.name() + "\n"
+        for key, value in vars(self).items():
+            if not key.startswith("_"):
+                res += "    " + str(key) + " : " + str(value) + "\n"
+
+        return res
+
 
 class Path:
     """
@@ -412,6 +496,6 @@ class Path:
         res = ""
 
         for edge in self.edges():
-            res += edge.source().name() + " --> " + edge.destination().name() + "\n"
+            res += str(edge)
 
         return res
