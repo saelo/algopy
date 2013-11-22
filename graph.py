@@ -45,7 +45,7 @@ class Graph:
         """
         if self.has_node(name):
             raise ValueError("Node %s already exists" % name)
-        self._nodes[name] = Node(name, data if data is not None else {})
+        self._nodes[name] = Node(name, data)
         return self._nodes[name]
 
     def add_nodes(self, l):
@@ -64,7 +64,7 @@ class Graph:
         node = self._node_lookup([n])
         # remove all edges to/from the node first
         for edge in self.edges():
-            if edge.source() == node or edge.destination() == node:
+            if node in edge.nodes():
                 self.remove_edge(edge)
         del self._nodes[node.name()]
 
@@ -112,8 +112,12 @@ class Graph:
         if not edge in self._edges:
             return
         self._edges.remove(edge)
-        edge.source()._remove_outgoing_edge(edge)
-        edge.destination()._remove_incoming_edge(edge)
+        if edge.is_directed():
+            edge.source()._remove_outgoing_edge(edge)
+            edge.destination()._remove_incoming_edge(edge)
+        else:
+            for node in edge.nodes():
+                node._remove_undirected_edge(edge)
 
     def remove_edges(self, l):
         """
@@ -247,6 +251,11 @@ class Node:
 
     def _remove_incoming_edge(self, edge):
         del self._incoming_edges[edge.source()]
+
+    def _remove_undirected_edge(self, edge):
+        other = edge.node1() if not self is edge.node1() else edge.node2()
+        del self._outgoing_edges[other]
+        del self._incoming_edges[other]
 
     def name(self):
         """

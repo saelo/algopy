@@ -10,6 +10,7 @@ from graph import *
 from algorithms.basics import *
 from algorithms.max_flow import solve_max_flow
 from algorithms.min_cost_flow import solve_min_cost_flow
+from algorithms.min_cut import solve_min_cut
 
 
 def max_flow():
@@ -34,7 +35,7 @@ def max_flow():
     solve_max_flow(g, g.get_node("S"), g.get_node("T"))
     print(g)
 
-def min_cost_test():
+def min_cost():
     g = Graph()
     g.add_node("A", {"demand" : -4})
     g.add_node("B", {"demand" : -7})
@@ -59,14 +60,31 @@ def min_cost_test():
     solve_min_cost_flow(g)
     print(g)
 
+def min_cut():
+    g = Graph()
+    g.add_nodes(["A", "B", "C", "D", "E"])
+    g.add_undirected_edge("A", "B", {"weight": 3})
+    g.add_undirected_edge("A", "C", {"weight": 1})
+    g.add_undirected_edge("B", "C", {"weight": 1})
+    g.add_undirected_edge("B", "D", {"weight": 2})
+    g.add_undirected_edge("B", "E", {"weight": 3})
+    g.add_undirected_edge("C", "D", {"weight": 2})
+    g.add_undirected_edge("D", "E", {"weight": 1})
+
+    solve_min_cut(g)
+
 if __name__ == "__main__":
     print("=====================================")
     print("max flow")
     print("=====================================")
     max_flow()
 
-
     print("=====================================")
     print("min cost flow")
     print("=====================================")
-    min_cost_test() 
+    min_cost() 
+
+    print("=====================================")
+    print("min cut")
+    print("=====================================")
+    min_cut() 
