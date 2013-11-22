@@ -8,7 +8,6 @@
 
 from graph import *
 
-
 def _get_active_node(graph, s, t):
     for node in graph.nodes():
         if not node is t and not node is s and node.overrun > 0:

@@ -7,8 +7,9 @@
 #
 
 from graph import *
-from basics import *
-from max_flow import solve_max_flow
+from algorithms.basics import *
+from algorithms.max_flow import solve_max_flow
+from algorithms.min_cost_flow import solve_min_cost_flow
 
 
 def max_flow():
@@ -33,5 +34,39 @@ def max_flow():
     solve_max_flow(g, g.get_node("S"), g.get_node("T"))
     print(g)
 
+def min_cost_test():
+    g = Graph()
+    g.add_node("A", {"demand" : -4})
+    g.add_node("B", {"demand" : -7})
+    g.add_node("C", {"demand" :  0})
+    g.add_node("D", {"demand" :  2})
+    g.add_node("E", {"demand" :  0})
+    g.add_node("F", {"demand" :  0})
+    g.add_node("G", {"demand" :  5})
+    g.add_node("H", {"demand" :  4})
+    g.add_edge("A", "B", {"capacity" : 4, "cost" : 1})
+    g.add_edge("A", "C", {"capacity" : 3, "cost" : 2})
+    g.add_edge("B", "D", {"capacity" : 9, "cost" : 3})
+    g.add_edge("D", "C", {"capacity" : 5, "cost" : 5})
+    g.add_edge("D", "F", {"capacity" : 8, "cost" : 1})
+    g.add_edge("C", "E", {"capacity" : 3, "cost" : 2})
+    g.add_edge("E", "F", {"capacity" : 1, "cost" : 4})
+    g.add_edge("F", "H", {"capacity" : 9, "cost" : 0})
+    g.add_edge("E", "G", {"capacity" : 2, "cost" : 2})
+    g.add_edge("H", "G", {"capacity" : 6, "cost" : 1})
+
+    print(g)
+    solve_min_cost_flow(g)
+    print(g)
+
 if __name__ == "__main__":
+    print("=====================================")
+    print("max flow")
+    print("=====================================")
     max_flow()
+
+
+    print("=====================================")
+    print("min cost flow")
+    print("=====================================")
+    min_cost_test() 
